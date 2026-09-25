@@ -21,5 +21,3 @@ streamlit run lab1app1.py
 streamlit run lab1app2.py
 ```
 
-Hint: For Streamlit Cloud:
-Important: Click Advanced settings before deploying and verify that the Python version dropdown is set to 3.12 (if you have  Python 3.12, 3.13 )
