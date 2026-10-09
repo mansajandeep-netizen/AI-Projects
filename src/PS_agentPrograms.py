@@ -46,29 +46,29 @@ def BestFirstSearchAgentProgram(f=None):
 
 
 def BreadthFirstSearchAgentProgram():
-  #Uninformed search: we always expand the shallowest node of the frontier (FIFO queue).
-  #All actions cost 1, so the first solution found has the fewest actions.
+    # Breadth-First Search (uninformed search).
+    # The frontier is a FIFO queue: first all states 1 action away are explored, then 2 actions away, ...
+    # Every action costs 1, so the first solution found has the fewest actions.
 
     def program(problem):
+        node = Node(problem.initial)  # the root of the search tree
+        if problem.goal_test(node.state):
+            return node
 
-      node = Node(problem.initial)
-      if problem.goal_test(node.state):
-        return node
+        frontier = deque([node])      # nodes waiting to be expanded (FIFO queue)
+        reached = {problem.initial}   # states already seen, so we never add them twice
 
-      frontier = deque([node]) #FIFO queue
-      reached = {problem.initial}
+        while frontier:
+            node = frontier.popleft()  # the oldest node of the frontier
 
-      while frontier:
-        node = frontier.popleft()
+            for child in node.expand(problem):
+                if problem.goal_test(child.state):  # early goal test: stop as soon as the goal is generated
+                    return child
+                if child.state not in reached:
+                    reached.add(child.state)
+                    frontier.append(child)
 
-        for child in node.expand(problem):
-            if problem.goal_test(child.state): #early goal test
-              return child
-            if child.state not in reached:
-              reached.add(child.state)
-              frontier.append(child)
-
-      return None #failure: the frontier is empty, there is no solution
+        return None  # failure: the frontier is empty, there is no solution
 
     return program
 

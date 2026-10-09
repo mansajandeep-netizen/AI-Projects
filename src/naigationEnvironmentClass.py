@@ -55,7 +55,9 @@ class NavigationEnvironment(environmentPro):
     actions = []
     for agent in self.agents:
       if agent.alive:
-        action = agent.seq.pop(0) if agent.seq else None
+        action = None                # no solution left
+        if agent.seq:
+          action = agent.seq.pop(0)  # the next city of the solution
         print("Agent decided to do {}.".format(action))
         self.execute_action(agent, action)
         actions.append(action)

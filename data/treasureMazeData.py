@@ -4,6 +4,8 @@
 # The task picture repeats 4 labels, so the second occurrence (reading top-to-bottom, left-to-right) got "2":
 #   E2 - the junction under C,  F2 - the dead end right of E,  J2 - the junction under E2,  L2 - the junction under H
 # Every edge is one corridor of the maze, its cost = 1 (one move)
+# Format: S=dict(M=1, N=1) means "S is connected to M and to N". Each corridor is written once,
+# the Graph class adds the opposite direction (M -> S, N -> S) by itself.
 
 mazeData = dict(
     S=dict(M=1, N=1),
