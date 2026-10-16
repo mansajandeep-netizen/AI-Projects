@@ -7,52 +7,48 @@ from src.labMazeData import DRONE, TARGET, actionCosts, actionName, labMazeCells
 
 
 class LabEnvironment(environmentPro):
-  '''The Hazardous Laboratory (Task 1).
-  status - the laboratory matrix (0 free, 1 wall/debris, 2 security drone, 3 rescue target, 4 start)
-  things - the security drones (the robots don't know where they are)
-  agents - the Rescue Robots'''
+  '''The Hazardous Laboratory.
+  status - the laboratory matrix, things - the security drones, agents - the Rescue Robots'''
 
   def __init__(self, maze, cellTM, nodesCount, seed=None):
     super().__init__()
     self.status = maze
-    self.cellTM = cellTM  # RESULT(cell, action) of the single moves
+    self.cellTM = cellTM
     self.target = findCell(maze, TARGET)
-    rng = random.Random(seed)  # the same seed gives the same attack powers
+    rng = random.Random(seed)
     for cell in labMazeCells(maze, DRONE):
       self.add_thing(SecurityDrone(nodesCount, rng), cell)
 
   def add_thing(self, thing, location=None):
-    if isinstance(thing, SimpleProblemSolvingAgentProgram):  # a Rescue Robot
+    if isinstance(thing, SimpleProblemSolvingAgentProgram):
       if thing in self.agents:
         print("Can't add the same agent twice")
         return
       self.agents.append(thing)
       print("{} starts in {} with energy {}".format(thing, thing.position, thing.performance))
-      thing(self.percept(thing))  # the robot formulates its goal and the problem, then searches for a solution
+      thing(self.percept(thing))
       if thing.seq:
         thing.status = 'on the way'
       else:
         thing.alive = False
         thing.status = 'no solution'
       return
-    super().add_thing(thing, location)  # a security drone
+    super().add_thing(thing, location)
 
   def droneAt(self, cell):
     drones = self.list_things_at(cell, SecurityDrone)
     return drones[0] if drones else None
 
   def percept(self, agent):
-    '''The robot senses its position, its energy and the drone in its own cell (if there is one).
-    The drones in the other cells stay unknown.'''
+    '''(position, energy, attack power of the drone in the robot's cell or None)'''
     drone = self.droneAt(agent.position)
     return agent.position, agent.performance, drone.attackPower if drone else None
 
   def execute_action(self, agent, action):
-    '''The robot makes one move: 0 left, 1 up, 2 right, 3 down'''
+    '''One move: 0 left, 1 up, 2 right, 3 down'''
     if not self.is_agent_alive(agent):
       return
 
-    # 1. the transition model: a wall/debris or the boundary of the laboratory blocks the move
     position = agent.position
     nextCell = self.cellTM[position].get(action)
     if nextCell is None:
@@ -61,7 +57,6 @@ class LabEnvironment(environmentPro):
       position = nextCell
     agent.path.append(position)
 
-    # 2. the move takes its action cost from the battery
     energy = round(agent.performance - actionCosts[action], 2)
     print("{} in {} with energy = {}".format(agent, position, max(energy, 0)))
     drone = self.droneAt(position)
@@ -70,36 +65,32 @@ class LabEnvironment(environmentPro):
       agent.alive = False
       agent.status = 'battery exhausted'
       print("{}: the battery is exhausted in {}".format(agent, position))
-
-    # 3. a security drone in this cell: the robot didn't know about it until now
     elif drone is not None:
       print("{} met a security drone with attack power {} in {}".format(agent, drone.attackPower, position))
-      if drone.attackPower >= 2 * energy:  # the robot's defensive capability = its current energy
+      if drone.attackPower >= 2 * energy:  # defensive capability = current energy
         agent.alive = False
         agent.status = 'captured by a drone'
         print("The drone captured {}: attack power {} >= 2 x energy {}".format(agent, drone.attackPower, energy))
       else:
-        print("{} activates Defense Mode: energy {} -> {}".format(agent, energy, round(0.9 * energy, 2)))
-        energy = round(0.9 * energy, 2)  # Defense Mode consumes 10% of the current energy
+        defended = round(0.9 * energy, 2)
+        print("{} activates Defense Mode: energy {} -> {}".format(agent, energy, defended))
+        energy = defended
 
-    # 4. the robot perceives the result: the updated energy becomes a part of its state
     agent.performance = energy
     agent.state = agent.update_state(agent.state, (position, energy, drone.attackPower if drone else None))
 
-    # 5. the mission
     if agent.alive and position == self.target:
-      agent.alive = False  # its work is done
+      agent.alive = False
       agent.status = 'target reached'
       print("{} reached the rescue target {} with energy {}".format(agent, position, energy))
 
   def step(self):
-    '''One time step: every robot that is still on the way makes the next move of its plan'''
     if self.is_done():
       print("There is no one here who could work...")
       return
     actions = []
     for agent in self.agents:
-      if agent.alive and not agent.seq:  # the plan is finished, but the target is not reached
+      if agent.alive and not agent.seq:
         agent.alive = False
         agent.status = 'stopped'
         print("{} has no more actions and stops in {}".format(agent, agent.position))
@@ -117,8 +108,7 @@ class LabEnvironment(environmentPro):
     super().run(steps)
 
   def winner(self):
-    '''The robots that reached the rescue target with the highest performance (energy).
-    [] - no robot reached the target; more than one robot - a tie'''
+    '''The robots that reached the target with the most energy ([] = no winner, 2 robots = a tie)'''
     finished = [agent for agent in self.agents if agent.status == 'target reached']
     if not finished:
       return []
@@ -136,5 +126,4 @@ class LabEnvironment(environmentPro):
     return winners
 
   def report(self):
-    '''The results of all robots (one row per robot)'''
     return [agent.report() for agent in self.agents]

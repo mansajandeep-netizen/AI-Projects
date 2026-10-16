@@ -116,9 +116,7 @@ def BestFirstSearchAgentProgramForShow(f=None):
     return program
 
 
-# =====================================================================
 # Lab 4 tasks: Uniform-Cost Search and Iterative Deepening (Iterative DLS)
-# =====================================================================
 
 def expand(problem, node):
     '''EXPAND(problem, node) yields the child nodes (see the BEST-FIRST-SEARCH pseudo-code)'''
