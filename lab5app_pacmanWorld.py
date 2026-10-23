@@ -485,8 +485,8 @@ def main():
     worldCol, pacCol = st.columns([3, 2])
     with worldCol:
         st.subheader("The world", divider="gray")
-        st.radio("Show the world of", [name for name, _ in pacmen], key="view", horizontal=True,
-                 format_func=lambda n: f"Pac-Man ({n})")
+        # st.radio("Show the world of", [name for name, _ in pacmen], key="view", horizontal=True,
+        #          format_func=lambda n: f"Pac-Man ({n})")
         st.html(worldGridHtml(st.session_state["view"], st.session_state["showGhosts"]))
         showLegend()
     with pacCol:
