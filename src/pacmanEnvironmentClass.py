@@ -125,7 +125,7 @@ class PacmanWorldEnvironment(MazeNavigationEnvironment):
             print(f"t={self.time:>3} | {text}")
 
     def is_done(self):
-        return all((not a.alive) or a.done for a in self.agents)
+        return all((not a.alive) or a.done or not a.seq for a in self.agents)
 
     def step(self):
         self.time += 1

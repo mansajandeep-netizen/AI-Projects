@@ -4,10 +4,12 @@
 
 ```
 pip install -r requirements.txt
-jupyter notebook "Lab5_InformedSearchStrategies_Tutorial&tasks.ipynb"
+python -m streamlit run lab5app_pacmanWorld.py
 ```
 
-The solution is in the notebook, section **Solutions** (after the task description). All cells have been run, so the results can be read without running anything. `PacmanWorld_Task2_route.html` is the interactive pyvis picture of the Task 2 route.
+The web app runs three Pac-Men (A\*, IDA\*, RBFS) step by step in copies of the same world. In the sidebar you can choose the world (seed), the heuristic, the food order and the start performance.
+
+The solution is also in the notebook `Lab5_InformedSearchStrategies_Tutorial&tasks.ipynb`, section **Solutions** (after the task description). All cells have been run, so the results can be read without running anything. `PacmanWorld_Task2_route.html` is the interactive pyvis picture of the Task 2 route.
 
 ## Files
 
@@ -21,6 +23,7 @@ The solution is in the notebook, section **Solutions** (after the task descripti
 | `src/pacmanEnvironmentClass.py` | `PacmanWorldEnvironment(MazeNavigationEnvironment)`: hidden ghosts, performance, eating and fights |
 | `src/agents.py` | `PacmanAgentAstar`, `PacmanAgentIDAstar` and `PacmanAgentRBFS` were added |
 | `src/thingClass.py` | Imported by `agentClass.py` but missing from the starter code |
+| `lab5app_pacmanWorld.py` | Streamlit web app |
 | `PacmanWorld_Task2_route.html` | The Task 2 route as a pyvis network (made by the notebook) |
 
 ## Design
@@ -33,6 +36,7 @@ The solution is in the notebook, section **Solutions** (after the task descripti
 * **Task 4.** Rational order: a single A\* search whose goal is the list of the remaining food dots stops at the cheapest one. The heuristic is h(n) = the minimum over the food dots of the maze-cost estimate, 2 per row up and 1 per row down (sideways moves are free). It never overestimates, so the first food dot found is the cheapest one to reach.
 * **Tasks 5–6.** Performance starts at 40% of the space cells (40). Every move costs 1, and every food dot doubles the performance. Against a ghost, the agent wins only if its performance is greater than the ghost's power, and then loses 10%. Otherwise the ghost kills it.
 * **Tasks 7–8.** IDA\* and RBFS follow the pseudocode, and both skip cells that are already on the current path (otherwise the free left/right moves would loop forever). The same `PacmanAgent` runs with each of them.
+* **Web app.** IDA\* and RBFS stop after 200,000 expanded nodes (`max_expansions`), so the page stays fast. On a few worlds the free moves make them search for half a minute or more; the app then reports that the search gave up.
 * **Starter-code fixes.** In the bottom-right corner, `defineMazeAvailableActions` had swapped the left and up checks, so Pac-Man could walk into a wall. A\* waited forever when its frontier became empty.
 
 ## Results

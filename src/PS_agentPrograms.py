@@ -19,13 +19,20 @@ nodeColors={
 INF = (math.inf, math.inf)
 
 
+class _SearchLimit(Exception):
+  '''Raised when IDA*/RBFS pass their max_expansions limit (used by the web app).'''
+
+
 def _hname(h):
   return getattr(h, '__name__', str(h))
 
 
 def _report(stats):
   '''Task 1: print the number of expanded nodes and the total cost of the path.'''
-  if stats.get('goal') is None:
+  if stats.get('gave_up'):
+    print(f"[{stats['algorithm']} | h={stats['heuristic']}] gave up after "
+          f"{stats['nodes_expanded']} expanded nodes (max_expansions)")
+  elif stats.get('goal') is None:
     print(f"[{stats['algorithm']} | h={stats['heuristic']}] no path found "
           f"| nodes expanded: {stats['nodes_expanded']}")
   else:
@@ -122,7 +129,7 @@ def A_StarSearchAgentProgram(f=None, verbose=True, report=True, tie_break=True):
 # ---------------------------------------------------------------------------
 # Task 7: Iterative-Deepening A* (IDA*)
 # ---------------------------------------------------------------------------
-def IDA_StarSearchAgentProgram(h=None, verbose=False, report=True, tie_break=False):
+def IDA_StarSearchAgentProgram(h=None, verbose=False, report=True, tie_break=False, max_expansions=None):
     '''IDA*: repeated depth-first searches, each limited by an f-cost "contour".
 
     function IDA*(problem)
@@ -144,6 +151,8 @@ def IDA_StarSearchAgentProgram(h=None, verbose=False, report=True, tie_break=Fal
         textbook IDA*. tie_break=True also prefers fewer moves among equally cheap
         paths, but it can be VERY slow here: the free left/right moves create a huge
         number of equally cheap paths and IDA* has no memory of visited cells.
+      * max_expansions (default None = no limit): stop and return None after that
+        many expanded nodes; stats['gave_up'] is then True. Used by the web app.
     '''
     if h is None:
       h = math.dist
@@ -169,6 +178,8 @@ def IDA_StarSearchAgentProgram(h=None, verbose=False, report=True, tie_break=Fal
         if problem.goal_test(node.state):
           return node, f_limit
         stats['nodes_expanded'] += 1
+        if max_expansions and stats['nodes_expanded'] > max_expansions:
+          raise _SearchLimit
         stats['max_depth'] = max(stats['max_depth'], node.depth)
         next_f = INF
         # try the most promising child first
@@ -191,7 +202,13 @@ def IDA_StarSearchAgentProgram(h=None, verbose=False, report=True, tie_break=Fal
         stats['iterations'] += 1
         if verbose:
           print(f"IDA* iteration {stats['iterations']}: f-limit = {round(f_limit[0], 3)}")
-        solution, f_limit = dfs_contour(root, f_limit)
+        try:
+          solution, f_limit = dfs_contour(root, f_limit)
+        except _SearchLimit:
+          stats['gave_up'] = True
+          if report:
+            _report(stats)
+          return None
         if solution is not None:
           stats.update(path_cost=solution.path_cost, steps=solution.depth, goal=solution.state)
           if report:
@@ -209,7 +226,7 @@ def IDA_StarSearchAgentProgram(h=None, verbose=False, report=True, tie_break=Fal
 # ---------------------------------------------------------------------------
 # Task 8: Recursive Best-First Search (RBFS)
 # ---------------------------------------------------------------------------
-def RBFSAgentProgram(h=None, verbose=False, report=True, tie_break=False):
+def RBFSAgentProgram(h=None, verbose=False, report=True, tie_break=False, max_expansions=None):
     '''RBFS: best-first search that uses only linear memory.
 
     function RBFS(problem, node, f_limit)
@@ -228,7 +245,7 @@ def RBFSAgentProgram(h=None, verbose=False, report=True, tie_break=False):
     f-value of the forgotten subtree, so it can come back to it later.
     As in IDA*: states already on the current path are skipped (no cycles), and
     f-values are pairs (g + h, tie-break part); with the default tie_break=False the
-    second part is 0, i.e. the textbook RBFS.
+    second part is 0, i.e. the textbook RBFS. max_expansions works as in IDA*.
     '''
     if h is None:
       h = math.dist
@@ -252,6 +269,8 @@ def RBFSAgentProgram(h=None, verbose=False, report=True, tie_break=False):
         if problem.goal_test(node.state):
           return node, node.f
         stats['nodes_expanded'] += 1
+        if max_expansions and stats['nodes_expanded'] > max_expansions:
+          raise _SearchLimit
         stats['max_depth'] = max(stats['max_depth'], node.depth)
         successors = [s for s in node.expand(problem) if s.state not in on_path]
         if not successors:
@@ -280,7 +299,13 @@ def RBFSAgentProgram(h=None, verbose=False, report=True, tie_break=False):
         live[0] -= len(successors)  # this level's successors are forgotten again
         return result, f_back
 
-      solution, _ = rbfs(root, INF)
+      try:
+        solution, _ = rbfs(root, INF)
+      except _SearchLimit:
+        stats['gave_up'] = True
+        if report:
+          _report(stats)
+        return None
       if solution is not None:
         stats.update(path_cost=solution.path_cost, steps=solution.depth, goal=solution.state)
       if report:

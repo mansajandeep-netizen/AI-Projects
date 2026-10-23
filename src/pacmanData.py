@@ -206,12 +206,13 @@ def drawPacmanWorld(maze, start, exit, foods=None, ghosts=None, segments=None,
 
 
 def pacmanPyvis(graph, maze, start, exit, segments=None, filename='PacmanWorld_route.html',
-                heading='PacMan World - route'):
+                heading='PacMan World - route', cdn_resources='local', height='750px'):
     '''Same PyVis picture as in the tutorial, but the edges of each leg of the
-    route get the leg colour. Writes an HTML file (open it in a browser).'''
+    route get the leg colour. Writes an HTML file (open it in a browser).
+    filename=None returns the HTML text instead (the web app uses cdn_resources='remote').'''
     from pyvis.network import Network
     net = Network(heading=heading, bgcolor='#242020', font_color='white',
-                  height='750px', width='100%', directed=True)
+                  height=height, width='100%', directed=True, cdn_resources=cdn_resources)
     colors = {'wall': 'red', 'path': 'white', 'food': 'yellow', 'goal': 'green', 'init': 'gold'}
     cells = list(graph.origin.keys())
     ids = [intTupleTostr(c) for c in cells]
@@ -240,6 +241,8 @@ def pacmanPyvis(graph, maze, start, exit, segments=None, filename='PacmanWorld_r
             else:
                 net.add_edge(intTupleTostr(a), intTupleTostr(b), color='#5a5a5a', width=1)
     net.toggle_physics(False)
+    if filename is None:
+        return net.generate_html(notebook=False)
     net.write_html(filename, notebook=False, open_browser=False)
     return filename
 

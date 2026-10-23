@@ -30,6 +30,7 @@ class PacmanAgent(MazeProblemSolvingAgentSMART):
         self.performance = round(0.4 * space_cells)  # Task 5: 40% of the space cells
         self.segments = []   # one entry per leg of the route
         self.planned = False
+        self.gave_up = False  # True if the search hit its max_expansions limit
         self.done = False
         self.history = []    # filled in by the environment while the agent moves
         self.events = []
@@ -55,6 +56,8 @@ class PacmanAgent(MazeProblemSolvingAgentSMART):
             # rational: ONE search whose goal is the whole list -> stops at the cheapest food
             goal = list(remaining) if self.rational else remaining[0]
             node = self.program(MazeProblem(current, goal, self.dataGraph))
+            if self._search_gave_up():
+                return
             if node is None:
                 print(f"{self.name}: cannot reach {goal} - skipped")
                 if self.rational:
@@ -66,12 +69,24 @@ class PacmanAgent(MazeProblemSolvingAgentSMART):
             remaining = [f for f in remaining if f not in passed]  # food passed on the way is eaten too
             current = node.state
         node = self.program(MazeProblem(current, self.exit, self.dataGraph))
+        if self._search_gave_up():
+            return
         if node is not None:
             self._add_leg(node, 'exit')
         self.seq = [a for leg in self.segments for a in leg['actions']]
         self.planned = True
         if self.verbose:
             self.print_plan()
+
+    def _search_gave_up(self):
+        '''The search stopped at its max_expansions limit: no route, Pac-Man stays put.'''
+        if getattr(self.program, 'stats', {}).get('gave_up'):
+            self.gave_up = True
+            self.seq = []
+            self.planned = True
+            print(f"{self.name}: the search gave up (too many expanded nodes) - no route")
+            return True
+        return False
 
     def _add_leg(self, node, kind):
         path = [n.state for n in node.path()]

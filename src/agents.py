@@ -66,14 +66,16 @@ def PacmanAgentAstar(initState, mazeWorldGraph, foods, exitState, space_cells,
 
 
 def PacmanAgentIDAstar(initState, mazeWorldGraph, foods, exitState, space_cells,
-                       h=mazeCostHeuristic, rational=True, name='Pac-Man (IDA*)', verbose=True):
+                       h=mazeCostHeuristic, rational=True, name='Pac-Man (IDA*)', verbose=True,
+                       max_expansions=None):
     return PacmanAgent(initState, mazeWorldGraph, foods, exitState,
-                       IDA_StarSearchAgentProgram(h, verbose=False, report=False),
+                       IDA_StarSearchAgentProgram(h, verbose=False, report=False, max_expansions=max_expansions),
                        space_cells, rational, name, verbose)
 
 
 def PacmanAgentRBFS(initState, mazeWorldGraph, foods, exitState, space_cells,
-                    h=mazeCostHeuristic, rational=True, name='Pac-Man (RBFS)', verbose=True):
+                    h=mazeCostHeuristic, rational=True, name='Pac-Man (RBFS)', verbose=True,
+                    max_expansions=None):
     return PacmanAgent(initState, mazeWorldGraph, foods, exitState,
-                       RBFSAgentProgram(h, verbose=False, report=False),
+                       RBFSAgentProgram(h, verbose=False, report=False, max_expansions=max_expansions),
                        space_cells, rational, name, verbose)
